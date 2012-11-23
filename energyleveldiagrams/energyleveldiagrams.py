@@ -21,6 +21,7 @@ class EnergyLevelDiagram(object):
         self.orbitals = []
         self.lines = []
         self.arrows = []
+        self.connections = []
 
         self.orbital_colors = defaultdict(itertools.repeat('cyan').next,
                 {'s': 'black',
@@ -63,37 +64,51 @@ class EnergyLevelDiagram(object):
     def connect_levels(self, levelname1, levelname2, value=None,
             arrowstyle='-|>,head_width=5,head_length=10',
             color='k', pad_length=0.1,
+            randomness=0.1,
             **arrow_kwargs):
         lev1 = self.levels[levelname1]
         lev2 = self.levels[levelname2]
         x1y1 = np.array((np.mean(self.orbital_xrange[lev1.orbital]), lev1.energy))
         x2y2 = np.array((np.mean(self.orbital_xrange[lev2.orbital]), lev2.energy))
+        if randomness is not None:
+            x1y1[0] += np.random.randn()*randomness
+            x2y2[0] += np.random.randn()*randomness
         arrow = mpl.patches.FancyArrowPatch(
                 x1y1,
                 x2y2,
                 arrowstyle=arrowstyle,
                 **arrow_kwargs)
+        if color == 'rand':
+            color = np.random.rand(3)
         arrow.set_facecolor(color)
         arrow.set_edgecolor(color)
         arrow.label = value
 
+        vector = (x2y2-x1y1)
+        angle = np.arctan2((vector[1]),vector[0])*180/np.pi
+        angle = 180+angle if angle < 0 else angle
+        if angle > 90:
+            angle += 180
+        self.connections.append([arrow,vector,angle])
+
         if value is not None:
-            textpos=np.mean([x1y1,x2y2],axis=0)
+            if randomness is not None:
+                textpos = x1y1 + np.random.rand() * vector
+            else:
+                textpos=np.mean([x1y1,x2y2],axis=0)
             if np.any([ np.sum((T.xy-textpos)**2) < pad_length for T in self.axis.texts]):
-                textpos += pad_length
-            vector = (x2y2-x1y1)
-            angle = np.arctan2(*vector)*180/np.pi
+                textpos += pad_length*vector
             # http://matplotlib.org/examples/pylab_examples/text_rotation_relative_to_line.html
             trans_angle = self.axis.transData.transform_angles(
                     np.array((angle,)), vector.reshape([1,2]))[0]
-            print angle,trans_angle,value
             
             txt = self.axis.annotate(str(value), textpos,
                     color=color,
                     bbox=dict(boxstyle='round,pad=0.2', fc='white', alpha=0.8),
-                    rotation=180+trans_angle)
-
-
+                    ha='center',
+                    va='center',
+                    rotation=trans_angle)
+            self.connections[-1].append(txt)
 
         self.axis.add_patch(arrow)
         self.arrows.append(arrow)
@@ -133,6 +148,12 @@ class EnergyLevelDiagram(object):
 
         self.axis.add_patch(arrow)
         self.arrows.append(arrow)
+
+    def _repair_text_angles(self):
+        for (arrow,vector,angle,txt) in self.connections:
+            trans_angle = self.axis.transData.transform_angles(
+                    np.array((angle,)), vector.reshape([1,2]))[0]
+            txt.set_rotation(trans_angle)
 
     def _fix_labels(self, pad_length=1):
         return # doesn't work.  @#$!
