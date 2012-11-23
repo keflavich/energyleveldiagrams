@@ -66,8 +66,8 @@ class EnergyLevelDiagram(object):
             **arrow_kwargs):
         lev1 = self.levels[levelname1]
         lev2 = self.levels[levelname2]
-        x1y1 = (np.mean(self.orbital_xrange[lev1.orbital]), lev1.energy)
-        x2y2 = (np.mean(self.orbital_xrange[lev2.orbital]), lev2.energy)
+        x1y1 = np.array((np.mean(self.orbital_xrange[lev1.orbital]), lev1.energy))
+        x2y2 = np.array((np.mean(self.orbital_xrange[lev2.orbital]), lev2.energy))
         arrow = mpl.patches.FancyArrowPatch(
                 x1y1,
                 x2y2,
@@ -81,9 +81,17 @@ class EnergyLevelDiagram(object):
             textpos=np.mean([x1y1,x2y2],axis=0)
             if np.any([ np.sum((T.xy-textpos)**2) < pad_length for T in self.axis.texts]):
                 textpos += pad_length
+            vector = (x2y2-x1y1)
+            angle = np.arctan2(*vector)*180/np.pi
+            # http://matplotlib.org/examples/pylab_examples/text_rotation_relative_to_line.html
+            trans_angle = self.axis.transData.transform_angles(
+                    np.array((angle,)), vector.reshape([1,2]))[0]
+            print angle,trans_angle,value
+            
             txt = self.axis.annotate(str(value), textpos,
                     color=color,
-                    bbox=dict(boxstyle='round,pad=0.2', fc='white', alpha=0.8))
+                    bbox=dict(boxstyle='round,pad=0.2', fc='white', alpha=0.8),
+                    rotation=180+trans_angle)
 
 
 
