@@ -1,6 +1,8 @@
 import matplotlib.pyplot as pl
 import matplotlib as mpl
 import numpy as np
+from collections import defaultdict
+import itertools
 
 orbitals = ['s','p','d','f','g']
 
@@ -20,13 +22,14 @@ class EnergyLevelDiagram(object):
         self.lines = []
         self.arrows = []
 
-        self.orbital_colors = {'s': 'black',
+        self.orbital_colors = defaultdict(itertools.repeat('cyan').next,
+                {'s': 'black',
                 'p': 'blue',
                 'd': 'red',
                 'f': 'green',
-                'g': 'orange'}
+                'g': 'orange'})
 
-        self.orbital_xrange = dict(
+        self.orbital_xrange = defaultdict(itertools.repeat((0.1,0.9)).next,
                 [(oo,[ii+0.1,ii+1-0.1]) for ii,oo in enumerate(orbitals)])
 
     @property
@@ -179,3 +182,7 @@ if __name__ == "__main__":
     hydrogen.axis.set_xticklabels(['s','p','d'])
     pl.ylabel("Energy (eV)")
     #hydrogen._fix_labels()
+
+    # NIST-based test...
+    
+
