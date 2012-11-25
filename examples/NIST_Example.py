@@ -87,3 +87,5 @@ if __name__ == "__main__":
     pl.title('H234_Grotrian_only3p_avals')
     plot_nist_grotrian(NThigh,savefile='H234_Grotrian_only3d.png',vformat="%0.1e",connection='Akis-1',lowerSelect='3d',color='k')
     pl.title('H234_Grotrian_only3d_avals')
+
+    pl.show()
